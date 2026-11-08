@@ -1,0 +1,291 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installer le Kiosque BD</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+  /* Mise en page : une seule colonne de lecture, comme une notice pliée ;
+     les étapes sont numérotées parce que l'ordre compte vraiment. */
+  :root {
+    --paper: #fbfaf6;      /* fond */
+    --panel: #f1efe6;      /* encadrés */
+    --ink: #1d1c22;        /* texte */
+    --muted: #5b5966;      /* texte secondaire */
+    --line: #dcd8ca;       /* filets */
+    --accent: #ffcf3f;     /* le jaune des boutons du kiosque */
+    --accent-ink: #1d1c22; /* texte posé sur le jaune */
+    --warn: #b4441f;       /* attention */
+    --warn-bg: #fbe9e1;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", -apple-system, system-ui, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, Menlo, monospace;
+    --step: 2.4rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #16151b; --panel: #211f28; --ink: #f2f0ea; --muted: #a9a6b4;
+      --line: #34313d; --warn: #ff9a76; --warn-bg: #2e1d18;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #16151b; --panel: #211f28; --ink: #f2f0ea; --muted: #a9a6b4;
+    --line: #34313d; --warn: #ff9a76; --warn-bg: #2e1d18;
+  }
+
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font: 1.075rem/1.6 var(--body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  main { max-width: 42rem; margin: 0 auto; padding-block: 2.5rem 4rem; display: grid; gap: 3rem; }
+  h1, h2, h3 { font-family: var(--display); line-height: 1.15; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.1rem, 6vw, 3rem); font-weight: 800; letter-spacing: -0.02em; }
+  h2 { font-size: 1.75rem; font-weight: 800; }
+  h3 { font-size: 1.2rem; font-weight: 600; }
+  p, ul, ol { margin: 0; }
+  a { color: inherit; text-decoration-color: var(--accent); text-decoration-thickness: 3px; text-underline-offset: 3px; }
+  a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+  .eyebrow { font: 700 .8rem/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+  header { display: grid; gap: 1rem; }
+  header .lead { font-size: 1.2rem; color: var(--muted); max-width: 36rem; }
+
+  /* choix du système */
+  .choose { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .9rem; }
+  .choose a {
+    display: grid; gap: .25rem; padding: 1.1rem 1.25rem; border-radius: 14px;
+    background: var(--panel); border: 2px solid var(--line); text-decoration: none;
+  }
+  .choose a:hover { border-color: var(--accent); }
+  .choose strong { font: 800 1.35rem/1.2 var(--display); }
+  .choose span { color: var(--muted); font-size: .95rem; }
+
+  section { display: grid; gap: 1.5rem; }
+  section > header { gap: .5rem; border-top: 3px solid var(--ink); padding-top: 1rem; }
+
+  /* étapes numérotées */
+  ol.steps { list-style: none; padding: 0; display: grid; gap: 1.75rem; counter-reset: s; }
+  ol.steps > li { counter-increment: s; display: grid; grid-template-columns: var(--step) 1fr; column-gap: 1rem; }
+  ol.steps > li::before {
+    content: counter(s); grid-row: 1 / span 9;
+    width: var(--step); height: var(--step); border-radius: 50%;
+    display: grid; place-items: center; background: var(--accent); color: var(--accent-ink);
+    font: 800 1.15rem/1 var(--display); font-variant-numeric: tabular-nums;
+  }
+  ol.steps > li > * + * { margin-top: .6rem; }
+  ol.steps h3 { padding-top: .45rem; }
+  .sub { padding-left: 1.2rem; display: grid; gap: .35rem; }
+  .sub li::marker { color: var(--muted); }
+
+  .file { font-family: var(--mono); font-size: .92em; background: var(--panel); border: 1px solid var(--line); padding: .05em .4em; border-radius: 5px; white-space: nowrap; }
+  .ui { font-weight: 700; }
+  kbd {
+    font: 700 .85em/1 var(--body); padding: .25em .55em; border-radius: 6px;
+    border: 1px solid var(--line); border-bottom-width: 3px; background: var(--panel); white-space: nowrap;
+  }
+
+  .note, .warn { padding: .85rem 1rem; border-radius: 10px; font-size: .98rem; }
+  .note { background: var(--panel); }
+  .warn { background: var(--warn-bg); color: var(--ink); border-left: 4px solid var(--warn); }
+  .warn strong { color: var(--warn); }
+
+  /* tableau des problèmes */
+  .table-wrap { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .98rem; }
+  th, td { text-align: left; vertical-align: top; padding: .7rem .75rem; border-bottom: 1px solid var(--line); }
+  th { font: 700 .8rem/1.2 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  td:first-child { width: 42%; }
+
+  .keys { display: grid; gap: .6rem; padding: 0; list-style: none; }
+  .keys li { display: grid; grid-template-columns: minmax(9rem, auto) 1fr; gap: 1rem; align-items: baseline; }
+
+  footer { color: var(--muted); font-size: .9rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+
+  @media (max-width: 30rem) {
+    :root { --step: 2rem; }
+    .keys li { grid-template-columns: 1fr; gap: .2rem; }
+  }
+  @media print {
+    body { font-size: 11pt; }
+    .choose { display: none; }
+    section { break-before: page; }
+    a { text-decoration: none; }
+  }
+</style>
+
+<main>
+  <header>
+    <p class="eyebrow">Mode d'emploi · borne d'exposition</p>
+    <h1>Installer le Kiosque BD</h1>
+    <p class="lead">Le kiosque affiche une bande dessinée en plein écran : elle défile toute seule, et les visiteurs la feuillettent avec la souris. Comptez 10 minutes pour l'installer. Aucune connaissance en informatique n'est nécessaire.</p>
+    <p>Choisissez votre ordinateur :</p>
+    <nav class="choose" aria-label="Choisir son ordinateur">
+      <a href="#windows"><strong>Windows</strong><span>PC portable ou de bureau. Rien à installer.</span></a>
+      <a href="#mac"><strong>Mac</strong><span>Google Chrome nécessaire.</span></a>
+    </nav>
+  </header>
+
+  <!-- ============================================================ WINDOWS -->
+  <section id="windows">
+    <header>
+      <p class="eyebrow">Ordinateur Windows 10 ou 11</p>
+      <h2>Installation sous Windows</h2>
+    </header>
+
+    <ol class="steps">
+      <li>
+        <h3>Débloquez le fichier ZIP</h3>
+        <p>Vous avez reçu un fichier compressé (ZIP), par exemple <span class="file">kiosque-bd.zip</span>. Avant de l'ouvrir :</p>
+        <ul class="sub">
+          <li>faites un <span class="ui">clic droit</span> sur le fichier ZIP, puis <span class="ui">Propriétés</span> ;</li>
+          <li>tout en bas, cochez <span class="ui">Débloquer</span>, puis cliquez sur <span class="ui">OK</span>.</li>
+        </ul>
+        <p class="note">Si la case « Débloquer » n'apparaît pas, passez simplement à l'étape suivante.</p>
+      </li>
+
+      <li>
+        <h3>Extrayez le dossier</h3>
+        <ul class="sub">
+          <li><span class="ui">Clic droit</span> sur le fichier ZIP, puis <span class="ui">Extraire tout…</span></li>
+          <li>Choisissez par exemple le dossier <span class="ui">Documents</span>, puis cliquez sur <span class="ui">Extraire</span>.</li>
+        </ul>
+        <p class="warn"><strong>Important :</strong> ne lancez pas le kiosque depuis l'intérieur du fichier ZIP. Utilisez toujours le dossier extrait.</p>
+      </li>
+
+      <li>
+        <h3>Placez votre BD dans le dossier</h3>
+        <p>Le dossier contient déjà une BD d'exemple nommée <span class="file">bd.pdf</span>. Pour présenter la vôtre :</p>
+        <ul class="sub">
+          <li>supprimez le fichier <span class="file">bd</span> d'exemple ;</li>
+          <li>copiez votre PDF dans le dossier ;</li>
+          <li>renommez-le exactement <span class="file">bd</span> : clic droit, <span class="ui">Renommer</span>.</li>
+        </ul>
+        <p class="note">Windows cache souvent la fin « .pdf » des noms de fichiers. Si vous la voyez, le nom complet doit être <span class="file">bd.pdf</span>. Si vous ne la voyez pas, tapez seulement <span class="file">bd</span>.</p>
+      </li>
+
+      <li>
+        <h3>Mettez l'écran en portrait</h3>
+        <ul class="sub">
+          <li>Branchez l'écran de la borne.</li>
+          <li>Ouvrez <span class="ui">Démarrer → Paramètres → Système → Écran</span>.</li>
+          <li>Cliquez sur l'écran de la borne dans le schéma. Dans <span class="ui">Orientation de l'affichage</span>, choisissez <span class="ui">Portrait</span>.</li>
+          <li>Si plusieurs écrans sont branchés, cochez <span class="ui">Faire de cet écran mon écran principal</span> : le kiosque s'ouvre toujours sur l'écran principal.</li>
+        </ul>
+      </li>
+
+      <li>
+        <h3>Lancez le kiosque</h3>
+        <p>Double-cliquez sur <span class="file">Lancer le kiosque - Windows</span>. La BD apparaît en plein écran après quelques secondes.</p>
+        <p class="note">La première fois, Windows peut afficher un écran bleu « Windows a protégé votre ordinateur ». Cliquez sur <span class="ui">Informations complémentaires</span>, puis sur <span class="ui">Exécuter quand même</span>. Cela n'arrive qu'une fois.</p>
+      </li>
+
+      <li>
+        <h3>Préparez l'ordinateur pour l'exposition</h3>
+        <ul class="sub">
+          <li><b>Pas de mise en veille :</b> <span class="ui">Paramètres → Système → Alimentation</span> (ou <span class="ui">Alimentation et batterie</span>), puis réglez l'écran et la mise en veille sur <span class="ui">Jamais</span>.</li>
+          <li><b>Pas de notifications :</b> activez <span class="ui">Ne pas déranger</span>, en cliquant sur la cloche en bas à droite de l'écran.</li>
+          <li><b>Démarrage automatique (facultatif) :</b> pour que le kiosque se lance à l'allumage de l'ordinateur,
+            <ol class="sub">
+              <li>faites un clic droit sur <span class="file">Lancer le kiosque - Windows</span>, puis <span class="ui">Afficher d'autres options → Créer un raccourci</span> ;</li>
+              <li>appuyez sur <kbd>⊞ Windows</kbd> + <kbd>R</kbd>, tapez <span class="file">shell:startup</span>, puis <kbd>Entrée</kbd> ;</li>
+              <li>déplacez le raccourci dans la fenêtre qui s'ouvre.</li>
+            </ol>
+          </li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ============================================================ MAC -->
+  <section id="mac">
+    <header>
+      <p class="eyebrow">Mac · macOS 12 ou plus récent</p>
+      <h2>Installation sur Mac</h2>
+    </header>
+
+    <ol class="steps">
+      <li>
+        <h3>Installez Google Chrome</h3>
+        <p>Safari ne sait pas afficher le kiosque en plein écran verrouillé. Si Chrome n'est pas déjà installé, téléchargez-le sur <a href="https://www.google.com/chrome/">google.com/chrome</a>.</p>
+      </li>
+
+      <li>
+        <h3>Extrayez le dossier</h3>
+        <p>Double-cliquez sur le fichier ZIP reçu : un dossier apparaît à côté. Rangez-le par exemple dans <span class="ui">Documents</span>.</p>
+      </li>
+
+      <li>
+        <h3>Placez votre BD dans le dossier</h3>
+        <p>Remplacez le fichier d'exemple <span class="file">bd.pdf</span> par votre PDF, et donnez-lui exactement le même nom : <span class="file">bd.pdf</span>.</p>
+      </li>
+
+      <li>
+        <h3>Lancez le kiosque une première fois</h3>
+        <p>Double-cliquez sur <span class="file">Lancer le kiosque - Mac</span>.</p>
+        <p class="note">La première fois, macOS bloque le fichier, car il ne vient pas de l'App Store. Cliquez sur <span class="ui">Terminé</span> ou <span class="ui">OK</span>. Ouvrez ensuite <span class="ui">Réglages Système → Confidentialité et sécurité</span>, descendez en bas de la page et cliquez sur <span class="ui">Ouvrir quand même</span>. Confirmez avec votre mot de passe.<br>Sur les versions plus anciennes de macOS, faites plutôt un clic droit sur le fichier, puis <span class="ui">Ouvrir</span>.</p>
+        <p class="note">Si une fenêtre propose d'installer les <span class="ui">outils de ligne de commande</span>, cliquez sur <span class="ui">Installer</span>. Attendez la fin (quelques minutes), puis double-cliquez à nouveau sur <span class="file">Lancer le kiosque - Mac</span>.</p>
+        <p>Une petite fenêtre « Terminal » s'ouvre en même temps que la BD. Laissez-la ouverte : c'est elle qui fait tourner le kiosque. Vous pouvez la réduire.</p>
+      </li>
+
+      <li>
+        <h3>Mettez l'écran en portrait</h3>
+        <ul class="sub">
+          <li><span class="ui">Réglages Système → Moniteurs</span>, sélectionnez l'écran de la borne, puis <span class="ui">Rotation : 90°</span>.</li>
+          <li>Si plusieurs écrans sont branchés, faites de l'écran de la borne l'écran principal : dans <span class="ui">Disposition…</span>, glissez la barre blanche du haut sur cet écran.</li>
+        </ul>
+      </li>
+
+      <li>
+        <h3>Préparez le Mac pour l'exposition</h3>
+        <ul class="sub">
+          <li><b>Pas de mise en veille :</b> dans <span class="ui">Réglages Système → Écran verrouillé</span>, réglez la désactivation de l'écran sur <span class="ui">Jamais</span>.</li>
+          <li><b>Démarrage automatique (facultatif) :</b> dans <span class="ui">Réglages Système → Général → Ouverture</span>, cliquez sur <span class="ui">+</span> et ajoutez <span class="file">Lancer le kiosque - Mac</span>.</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ============================================================ COMMUN -->
+  <section id="utilisation">
+    <header>
+      <p class="eyebrow">Windows et Mac</p>
+      <h2>Pendant l'exposition</h2>
+    </header>
+    <p>Au repos, la BD défile toute seule, en boucle. Un visiteur qui clique passe en lecture libre : il tourne les pages en cliquant sur les bords, avec la molette ou avec le menu jaune <span class="ui">☰ Chapitres</span>.</p>
+    <ul class="keys">
+      <li><span><kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>Q</kbd></span><span>Remet la BD en défilement automatique. Maintenez <kbd>Ctrl</kbd> et <kbd>Alt</kbd>, puis appuyez sur <kbd>Q</kbd>.</span></li>
+      <li><span><kbd>Alt</kbd> + <kbd>F4</kbd></span><span>Ferme le kiosque, sous Windows.</span></li>
+      <li><span><kbd>⌘ Cmd</kbd> + <kbd>Q</kbd></span><span>Ferme le kiosque, sur Mac.</span></li>
+    </ul>
+    <p class="note">Le clavier ne sert qu'au personnel : vous pouvez le ranger hors de portée du public. La souris suffit aux visiteurs.</p>
+  </section>
+
+  <section id="problemes">
+    <header>
+      <p class="eyebrow">Dépannage</p>
+      <h2>En cas de problème</h2>
+    </header>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ce que vous voyez</th><th>Que faire</th></tr></thead>
+        <tbody>
+          <tr><td>« Le kiosque ne trouve pas ses fichiers » ou « Fichiers du kiosque introuvables »</td><td>Le kiosque a été lancé depuis le fichier ZIP. Extrayez d'abord le dossier (étape 2), puis lancez-le depuis le dossier extrait.</td></tr>
+          <tr><td>« La BD bd.pdf est introuvable »</td><td>Vérifiez le nom de votre PDF (étape 3). Il ne doit pas s'appeler <span class="file">bd.pdf.pdf</span> ni <span class="file">BD (1).pdf</span>.</td></tr>
+          <tr><td>« Impossible d'ouvrir la BD »</td><td>Le PDF est peut-être abîmé. Ouvrez-le avec votre lecteur PDF habituel pour vérifier, puis copiez-le à nouveau.</td></tr>
+          <tr><td>La BD s'ouvre sur le mauvais écran</td><td>Faites de l'écran de la borne l'écran principal (étape « Mettez l'écran en portrait »), puis relancez.</td></tr>
+          <tr><td>La BD apparaît couchée</td><td>L'écran n'est pas en orientation portrait. Voir l'étape « Mettez l'écran en portrait ».</td></tr>
+          <tr><td>Le défilement est saccadé</td><td>L'ordinateur est un peu lent pour cette BD. Prévenez la personne qui vous a fourni le kiosque : un réglage permet de passer en affichage page par page.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Pour obtenir de l'aide sous Windows, envoyez le fichier journal à la personne qui vous a fourni le kiosque. Appuyez sur <kbd>⊞ Windows</kbd> + <kbd>R</kbd>, tapez <span class="file">%LOCALAPPDATA%\KiosqueBD</span>, puis <kbd>Entrée</kbd> : le fichier s'appelle <span class="file">journal.txt</span>.</p>
+  </section>
+
+  <footer>Kiosque BD · ce guide fonctionne sans connexion Internet et peut être imprimé.</footer>
+</main>

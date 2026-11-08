@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kiosque BD</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { --bg:#111; --ui:rgba(20,20,24,.82); --accent:#ffcf3f; --fg:#f4f4f4; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; overflow:hidden; background:var(--bg); color:var(--fg);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    user-select:none; -webkit-user-select:none; }
+  img { -webkit-user-drag:none; user-select:none; }
+  .view { position:fixed; inset:0; display:none; }
+  .view.active { display:block; }
+
+  /* ---------- chargement ---------- */
+  /* « .active » obligatoire : un sélecteur d'id l'emporterait sinon sur « .view { display:none } » */
+  #loading.active { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; font-size:22px; }
+  #loading .bar { width:50vw; height:6px; background:#333; border-radius:3px; overflow:hidden; }
+  #loading .bar div { height:100%; width:0; background:var(--accent); transition:width .2s; }
+  #loading .err { max-width:80vw; font-size:17px; line-height:1.5; color:#ffb4a8; white-space:pre-line; }
+
+  /* ---------- auto : défilement continu ---------- */
+  #auto { cursor:none; }
+  #auto .fade { position:absolute; inset:0; transition:opacity 1s; }
+  #auto .fade.out { opacity:0; }
+  #track { position:absolute; left:0; right:0; top:0; will-change:transform; }
+  #track img { display:block; width:100%; background:#222; }
+  #slide { position:absolute; inset:0; }
+  #slide img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; transition:opacity 1.2s; }
+  #hint { position:absolute; left:50%; bottom:4vh; transform:translateX(-50%);
+    background:var(--ui); padding:.7em 1.4em; border-radius:999px; font-size:clamp(16px,2.2vh,30px);
+    border:2px solid var(--accent); animation:pulse 2.4s ease-in-out infinite; white-space:nowrap; }
+  @keyframes pulse { 0%,100%{opacity:.55} 50%{opacity:1} }
+
+  /* ---------- exploration ---------- */
+  #explore { cursor:default; }
+  #stage { position:absolute; left:0; right:0; top:0; bottom:var(--barH); }
+  #stage img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; transition:opacity .25s, transform .25s; }
+  #stage img.leave-next { opacity:0; transform:translateX(-4%); }
+  #stage img.leave-prev { opacity:0; transform:translateX(4%); }
+  .zone { position:absolute; top:0; bottom:0; width:22%; display:flex; align-items:center; cursor:pointer; }
+  .zone.prev { left:0; justify-content:flex-start; }
+  .zone.next { right:0; justify-content:flex-end; }
+  .zone span { margin:0 2vw; width:min(9vh,90px); height:min(9vh,90px); border-radius:50%; background:var(--ui);
+    display:flex; align-items:center; justify-content:center; font-size:min(5vh,48px); opacity:0; transition:opacity .2s; }
+  .zone:hover span { opacity:1; }
+  .zone.disabled { cursor:default; } .zone.disabled span { display:none; }
+
+  :root { --barH: max(64px, 7vh); }
+  #bar { position:absolute; left:0; right:0; bottom:0; height:var(--barH); background:var(--ui);
+    display:flex; align-items:center; gap:1.2vh; padding:0 2vh; font-size:clamp(15px,2vh,28px); }
+  #bar button { font:inherit; color:var(--fg); background:#2b2b31; border:0; border-radius:10px;
+    height:72%; padding:0 1.2em; cursor:pointer; }
+  #bar button:hover { background:#3a3a42; }
+  #bar button:disabled { opacity:.35; cursor:default; }
+  #bar .chap { background:var(--accent); color:#111; font-weight:600; }
+  #bar .chap:hover { background:#ffdb6b; }
+  #info { flex:1; text-align:center; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+  #info b { color:var(--accent); }
+  #info { line-height:1.25; } #info small { display:block; font-size:.72em; opacity:.75; overflow:hidden; text-overflow:ellipsis; }
+
+  #chapters { position:absolute; inset:0; bottom:var(--barH); background:rgba(0,0,0,.72); display:none;
+    align-items:flex-end; justify-content:center; }
+  #chapters.open { display:flex; }
+  #chapters ul { list-style:none; margin:0 0 2vh; padding:1vh; background:#1c1c21; border-radius:16px;
+    width:min(92vw,900px); max-height:75vh; overflow:auto; font-size:clamp(16px,2.3vh,32px); }
+  #chapters li { padding:1.1em 1.2em; border-radius:10px; cursor:pointer; display:flex; justify-content:space-between; gap:1em; }
+  #chapters li:hover { background:#2e2e36; }
+  #chapters li.current { color:var(--accent); font-weight:600; }
+  #chapters li small { opacity:.6; }
+</style>
+<script src="config.js"></script>
+</head>
+<body>
+  <div id="loading" class="view active">
+    <div id="loadmsg">Chargement de la BD…</div>
+    <div class="bar"><div id="loadbar"></div></div>
+    <div class="err" id="loaderr"></div>
+  </div>
+
+  <div id="auto" class="view">
+    <div class="fade" id="autofade">
+      <div id="track"></div>
+      <div id="slide"></div>
+    </div>
+    <div id="hint"></div>
+  </div>
+
+  <div id="explore" class="view">
+    <div id="stage"></div>
+    <div class="zone prev" id="zprev"><span>‹</span></div>
+    <div class="zone next" id="znext"><span>›</span></div>
+    <div id="chapters"><ul id="chaplist"></ul></div>
+    <div id="bar">
+      <button class="chap" id="bchap" type="button">☰ Chapitres</button>
+      <button id="bprev" type="button" aria-label="Page précédente">◀</button>
+      <div id="info" aria-live="polite"></div>
+      <button id="bnext" type="button" aria-label="Page suivante">▶</button>
+    </div>
+  </div>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

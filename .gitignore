@@ -1,0 +1,6 @@
+# Profil Chrome créé par les scripts de lancement
+.profil-kiosque/
+
+# Système
+.DS_Store
+Thumbs.db

@@ -1,0 +1,109 @@
+# Vérifie le code, teste les lanceurs et fabrique le ZIP à distribuer.
+# - à chaque push / pull request : ZIP disponible dans l'onglet Actions (artefact)
+# - à chaque tag v* (ex. v1.0) : ZIP publié dans une Release GitHub
+name: Paquet ZIP
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  verifier:
+    name: Vérifications + lanceur Mac/Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Syntaxe JavaScript et shell
+        run: |
+          node --check app.js
+          node --check config.js
+          bash -n lib/kiosque-mac-linux.sh
+
+      - name: Syntaxe PowerShell
+        shell: pwsh
+        run: |
+          $errs = $null
+          [System.Management.Automation.Language.Parser]::ParseFile("$PWD/lib/kiosque-windows.ps1", [ref]$null, [ref]$errs) | Out-Null
+          if ($errs) { $errs | Format-List; exit 1 }
+
+      - name: Lanceur Mac/Linux avec un faux navigateur
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          cat > "$RUNNER_TEMP/bin/chromium" <<'SH'
+          #!/bin/bash
+          base="${@: -1}"; base="${base%/index.html*}"
+          for f in index.html app.js lib/pdf.min.mjs lib/pdf.worker.min.mjs bd.pdf; do
+            curl -fsS -o /dev/null -w "$f -> %{http_code} %{content_type}\n" "$base/$f" || exit 1
+          done
+          SH
+          chmod +x "$RUNNER_TEMP/bin/chromium"
+          PATH="$RUNNER_TEMP/bin:$PATH" "./Lancer le kiosque - Mac.command"
+
+  windows:
+    name: Lanceur Windows (vrai Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Le serveur PowerShell sert les fichiers
+        shell: pwsh
+        run: |
+          $p = Start-Process powershell.exe -PassThru -RedirectStandardOutput out.txt -RedirectStandardError err.txt `
+                 -ArgumentList '-NoProfile','-ExecutionPolicy','Bypass','-File','lib\kiosque-windows.ps1','-TestSeconds','60'
+          $port = $null
+          for ($i = 0; $i -lt 60 -and -not $port; $i++) {
+            Start-Sleep -Milliseconds 500
+            $m = Select-String -Path out.txt -Pattern 'PORT=(\d+)' -ErrorAction SilentlyContinue
+            if ($m) { $port = $m.Matches[0].Groups[1].Value }
+          }
+          if (-not $port) { Get-Content err.txt -ErrorAction SilentlyContinue; throw "Le serveur n'a pas démarré." }
+          $expect = [ordered]@{
+            "index.html" = "text/html"; "app.js" = "text/javascript"; "lib/pdf.min.mjs" = "text/javascript"
+            "lib/pdf.worker.min.mjs" = "text/javascript"; "bd.pdf" = "application/pdf"
+          }
+          foreach ($f in $expect.Keys) {
+            $r = Invoke-WebRequest "http://localhost:$port/$f" -UseBasicParsing
+            $type = "$($r.Headers['Content-Type'])"
+            "$f -> $($r.StatusCode) $type"
+            if (-not $type.StartsWith($expect[$f])) { throw "Type MIME incorrect pour $f" }
+          }
+          $code = try { (Invoke-WebRequest "http://localhost:$port/..%2f..%2fWindows%2fwin.ini" -UseBasicParsing).StatusCode } catch { [int]$_.Exception.Response.StatusCode }
+          "Accès hors du dossier -> $code"
+          if ($code -ne 404) { throw "Le serveur sert des fichiers hors du dossier du kiosque." }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+
+  paquet:
+    name: Fabriquer le ZIP
+    needs: [verifier, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # git archive applique .gitattributes : CRLF pour .bat/.ps1, fichiers de dev exclus,
+      # droit d'exécution conservé pour le lanceur Mac.
+      - name: Créer kiosque-bd.zip
+        run: |
+          git archive --format=zip --prefix=kiosque-bd/ -o kiosque-bd.zip HEAD
+          unzip -l kiosque-bd.zip
+          unzip -p kiosque-bd.zip "kiosque-bd/Lancer le kiosque - Windows.bat" | grep -q $'\r' || { echo "::error::.bat sans CRLF"; exit 1; }
+          unzip -Z kiosque-bd.zip "kiosque-bd/Lancer le kiosque - Mac.command" | grep -q '^-rwx' || { echo "::error::.command non exécutable"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kiosque-bd
+          path: kiosque-bd.zip
+          retention-days: 90
+
+      - name: Publier la Release (tags v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" kiosque-bd.zip --title "Kiosque BD $GITHUB_REF_NAME" \
+            --notes "Téléchargez **kiosque-bd.zip**, extrayez-le, puis ouvrez « Guide d'installation.html »."
