@@ -4,9 +4,9 @@ Visionneuse de bande dessinée PDF pour borne d'exposition : écran externe en p
 
 Au repos, la BD défile toute seule en boucle. Le visiteur clique pour la feuilleter à son rythme : page par page, à la molette ou par chapitre.
 
-[![Télécharger le kiosque (ZIP)](https://img.shields.io/badge/T%C3%A9l%C3%A9charger-kiosque--bd.zip-ffcf3f?style=for-the-badge&logo=github&logoColor=white&labelColor=1d1c22)](https://github.com/aboucaud/rubinobs-comic-viewer/releases/latest/download/kiosque-bd.zip)
-[![Dernière version](https://img.shields.io/github/v/release/aboucaud/rubinobs-comic-viewer?style=for-the-badge&label=version&labelColor=1d1c22&color=555)](https://github.com/aboucaud/rubinobs-comic-viewer/releases/latest)
-[![CI](https://img.shields.io/github/actions/workflow/status/aboucaud/rubinobs-comic-viewer/paquet.yml?branch=main&style=for-the-badge&label=CI&labelColor=1d1c22)](https://github.com/aboucaud/rubinobs-comic-viewer/actions/workflows/paquet.yml)
+[![Télécharger le kiosque (ZIP)](https://img.shields.io/badge/T%C3%A9l%C3%A9charger-kiosque--bd.zip-ffcf3f?style=for-the-badge&logo=github&logoColor=white&labelColor=1d1c22)](https://github.com/aboucaud/comic-viewer/releases/latest/download/kiosque-bd.zip)
+[![Dernière version](https://img.shields.io/github/v/release/aboucaud/comic-viewer?style=for-the-badge&label=version&labelColor=1d1c22&color=555)](https://github.com/aboucaud/comic-viewer/releases/latest)
+[![CI](https://img.shields.io/github/actions/workflow/status/aboucaud/comic-viewer/paquet.yml?branch=main&style=for-the-badge&label=CI&labelColor=1d1c22)](https://github.com/aboucaud/comic-viewer/actions/workflows/paquet.yml)
 
 Le bouton jaune télécharge toujours la dernière version. Décompressez le fichier, puis ouvrez `Guide d'installation.html`.
 
