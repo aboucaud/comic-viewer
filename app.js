@@ -274,7 +274,20 @@ $("explore").addEventListener("wheel", (e) => {
 const isCombo = (e) => { const k = C.exitCombo, key = String(k.key).toLowerCase();
   const sameKey = (e.key && e.key.toLowerCase() === key) || e.code === "Key" + key.toUpperCase();
   return sameKey && !!k.ctrl === e.ctrlKey && !!k.alt === e.altKey && !!k.shift === e.shiftKey; };
+// Raccourcis de fermeture du navigateur : ne jamais les intercepter. Sous Windows,
+// Chrome et Edge confient d'abord la frappe à la page ; un preventDefault() sur
+// Alt+F4 empêche alors la fenêtre de se fermer.
+const MODIFIERS = new Set(["Alt", "AltGraph", "Control", "Meta", "Shift"]);
+const isQuit = (e) => (e.altKey && e.key === "F4") ||
+  (e.metaKey && !e.ctrlKey && !e.altKey && (e.key || "").toLowerCase() === "q");
 addEventListener("keydown", (e) => {
+  if (MODIFIERS.has(e.key)) return; // une touche de modification seule ne fait rien
+  if (isQuit(e)) {
+    // L'onglet du kiosque n'a qu'une page dans son historique : le navigateur
+    // autorise window.close(), qui ferme aussi le kiosque si Alt+F4 est ignoré.
+    if (e.altKey) window.close();
+    return;
+  }
   if (isCombo(e)) {
     e.preventDefault();
     if (mode === "explore") startAuto(true);

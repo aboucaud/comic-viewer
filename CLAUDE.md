@@ -14,7 +14,7 @@ Visionneuse de PDF (bande dessinée de vulgarisation scientifique) pour un écra
 ## Comportement
 - Mode auto : défilement continu (`autoMode: "scroll"`) ou page par page avec fondu (`"pages"`). Il tourne en boucle et le curseur est masqué. Un clic fait passer en exploration, à la page alors affichée.
 - Mode exploration : clic sur les bords de la page ou sur les boutons ◀ ▶, molette, menu des chapitres. Les chapitres viennent des signets du PDF ou de `config.chapters`.
-- Seul Ctrl+Alt+Q (`exitCombo`) fait sortir de l'exploration. Les autres touches, le clic droit, le glisser-déposer et le zoom sont neutralisés. Le retour automatique après inactivité est désactivé par défaut (`inactivityReturn: 0`).
+- Seul Ctrl+Alt+Q (`exitCombo`) fait sortir de l'exploration. Les autres touches, le clic droit, le glisser-déposer et le zoom sont neutralisés. Exception obligatoire : Alt+F4 et Cmd+Q ne doivent jamais recevoir `preventDefault()`. Sous Windows, la page qui consomme Alt+F4 empêche la fenêtre de se fermer (constaté en test) ; Alt+F4 appelle aussi `window.close()` en secours. Le retour automatique après inactivité est désactivé par défaut (`inactivityReturn: 0`).
 
 ## Tester
 `python3 -m http.server 8765`, puis ouvrir http://127.0.0.1:8765. Utiliser une fenêtre en portrait, par exemple 540×960. `?pdf=autre.pdf&mode=pages` remplace les réglages de `config.js` le temps d'un test.
