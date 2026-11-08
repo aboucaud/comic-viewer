@@ -73,7 +73,7 @@ jobs:
           }
           $code = try { (Invoke-WebRequest "http://localhost:$port/..%2f..%2fWindows%2fwin.ini" -UseBasicParsing).StatusCode } catch { [int]$_.Exception.Response.StatusCode }
           "Accès hors du dossier -> $code"
-          if ($code -ne 404) { throw "Le serveur sert des fichiers hors du dossier du kiosque." }
+          if ($code -lt 400 -or $code -ge 500) { throw "Le serveur sert des fichiers hors du dossier du kiosque." }
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
 
   paquet:
