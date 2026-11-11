@@ -65,20 +65,36 @@ async function prerenderAll() {
 
 // ---------------------------------------------------------------- chapitres
 async function loadChapters() {
-  if (Array.isArray(C.chapters) && C.chapters.length) return C.chapters.map((c) => ({ title: c.title, page: +c.page }));
+  // Chaque chapitre peut porter des signets (marks) : raccourcis vers une page précise, affichés en retrait.
+  const byPage = (a, b) => a.page - b.page;
+  const valid = (e) => Number.isInteger(e.page) && e.page >= 1 && e.page <= N
+    || (console.warn(`« ${e.title} » : page ${e.page} hors du PDF, ignoré`), false);
+  if (Array.isArray(C.chapters) && C.chapters.length) return C.chapters.map((c) => ({
+    title: c.title, page: +c.page,
+    marks: (Array.isArray(c.marks) ? c.marks : []).map((m) => ({ title: m.title, page: +m.page })).filter(valid).sort(byPage),
+  })).filter(valid).sort(byPage);
   const out = [];
   try {
     const outline = await pdf.getOutline();
     for (const item of outline || []) {
-      let dest = item.dest;
-      if (typeof dest === "string") dest = await pdf.getDestination(dest);
-      if (!Array.isArray(dest)) continue;
-      const ref = dest[0];
-      const page = typeof ref === "number" ? ref + 1 : (await pdf.getPageIndex(ref)) + 1;
-      out.push({ title: item.title, page });
+      const page = await outlinePage(item);
+      if (!page) continue;
+      const marks = [];
+      for (const sub of item.items || []) {
+        const p = await outlinePage(sub);
+        if (p) marks.push({ title: sub.title, page: p });
+      }
+      out.push({ title: item.title, page, marks: marks.sort(byPage) });
     }
   } catch (e) { console.warn("Signets illisibles", e); }
-  return out.sort((a, b) => a.page - b.page);
+  return out.sort(byPage);
+}
+async function outlinePage(item) {
+  let dest = item.dest;
+  if (typeof dest === "string") dest = await pdf.getDestination(dest);
+  if (!Array.isArray(dest)) return 0;
+  const ref = dest[0];
+  return typeof ref === "number" ? ref + 1 : (await pdf.getPageIndex(ref)) + 1;
 }
 const chapterOf = (n) => { let c = null; for (const ch of chapters) if (ch.page <= n) c = ch; return c; };
 
@@ -232,11 +248,12 @@ function updateBar() {
   $("bprev").disabled = cur <= 1; $("bnext").disabled = cur >= N;
   $("zprev").classList.toggle("disabled", cur <= 1); $("znext").classList.toggle("disabled", cur >= N);
   $("bchap").style.display = chapters.length ? "" : "none";
-  for (const li of $("chaplist").children) li.classList.toggle("current", ch && +li.dataset.page === ch.page);
+  for (const li of $("chaplist").children) li.classList.toggle("current", !!ch && li.dataset.chap === String(chapters.indexOf(ch)));
 }
 function buildChapterList() {
-  $("chaplist").innerHTML = chapters.map((c) =>
-    `<li data-page="${c.page}"><span>${escapeHtml(c.title)}</span><small>p. ${c.page}</small></li>`).join("");
+  const item = (t, p, attrs) => `<li data-page="${p}" ${attrs}><span>${escapeHtml(t)}</span><small>p. ${p}</small></li>`;
+  $("chaplist").innerHTML = chapters.map((c, i) =>
+    item(c.title, c.page, `data-chap="${i}"`) + c.marks.map((m) => item(m.title, m.page, `class="mark"`)).join("")).join("");
 }
 const escapeHtml = (s) => String(s).replace(/[&<>"]/g, (m) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[m]));
 const toggleChapters = (open) => $("chapters").classList.toggle("open", open ?? !$("chapters").classList.contains("open"));

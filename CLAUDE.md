@@ -9,11 +9,12 @@ Visionneuse de PDF (bande dessinée de vulgarisation scientifique) pour un écra
 - Lanceurs à double-cliquer, `Lancer le kiosque - Windows.bat` et `Lancer le kiosque - Mac.command`. Ils appellent `lib/kiosque-windows.ps1` (serveur PowerShell `HttpListener`, rien à installer) et `lib/kiosque-mac-linux.sh` (`python3 -m http.server`). Le serveur est obligatoire : sous `file://`, le navigateur bloque les modules ES et le worker PDF.js, même avec `--allow-file-access-from-files` (vérifié).
 - Public visé : l'installation est faite par une personne non informaticienne, sous Windows. `Guide d'installation.html` est son mode d'emploi, à tenir à jour quand les lanceurs ou les messages changent. Les messages d'erreur des lanceurs sont en français courant.
 - Encodage : `.ps1` en UTF-8 avec BOM + CRLF, `.bat` en CRLF (voir `.gitattributes`). Sinon les accents ou les blocs `if` cassent sous Windows.
-- `bd.pdf` : BD de test de 12 pages en 3 chapitres, avec signets.
+- `bd.pdf` : BD de test de 12 pages en 3 chapitres, avec un raccourci en retrait sous chacun (signets générés depuis `outils/sommaire.toml`).
+- `outils/ajouter_sommaire.py` : script uv (pypdf, métadonnées PEP 723) qui écrit les signets d'un PDF depuis un TOML (`[[chapitre]]` puis `[[chapitre.sections]]`, pages numérotées à partir de 1). Il remplace les signets existants et s'arrête sur un message en français, sans trace Python. `outils/sommaire.toml` est l'exemple pour `bd.pdf` et le sommaire lu par défaut. `outils/` est exclu du ZIP (`export-ignore`) ; la CI exécute le script sur `bd.pdf`.
 
 ## Comportement
 - Mode auto : défilement continu (`autoMode: "scroll"`) ou page par page avec fondu (`"pages"`). Il tourne en boucle et le curseur est masqué. Un clic fait passer en exploration, à la page alors affichée.
-- Mode exploration : clic sur les bords de la page ou sur les boutons ◀ ▶, molette, menu des chapitres. Les chapitres viennent des signets du PDF ou de `config.chapters`.
+- Mode exploration : clic sur les bords de la page ou sur les boutons ◀ ▶, molette, menu des chapitres. Les chapitres viennent des signets du PDF ou de `config.chapters`. Seuls deux niveaux sont lus : les signets de premier niveau sont les chapitres, leurs enfants (`marks`) sont des raccourcis vers une page, affichés en retrait. La barre et la surbrillance suivent le chapitre, jamais le raccourci. Une entrée hors du PDF est ignorée.
 - Seul Ctrl+Alt+Q (`exitCombo`) fait sortir de l'exploration. Les autres touches, le clic droit, le glisser-déposer et le zoom sont neutralisés. Exception obligatoire : Alt+F4 et Cmd+Q ne doivent jamais recevoir `preventDefault()`. Sous Windows, la page qui consomme Alt+F4 empêche la fenêtre de se fermer (constaté en test) ; Alt+F4 appelle aussi `window.close()` en secours. Le retour automatique après inactivité est désactivé par défaut (`inactivityReturn: 0`).
 
 ## Tester

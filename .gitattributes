@@ -10,3 +10,4 @@
 .gitattributes  export-ignore
 .gitignore      export-ignore
 CLAUDE.md       export-ignore
+outils          export-ignore
