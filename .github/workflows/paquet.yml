@@ -15,7 +15,7 @@ jobs:
     name: Vérifications + lanceur Mac/Linux
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Syntaxe JavaScript et shell
         run: |
@@ -23,7 +23,9 @@ jobs:
           node --check config.js
           bash -n lib/kiosque-mac-linux.sh
 
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10
+        with:
+          enable-cache: false   # un seul script, rien à mettre en cache
 
       - name: Outil de sommaire sur bd.pdf
         run: uv run outils/ajouter_sommaire.py bd.pdf -o "$RUNNER_TEMP/bd_signets.pdf"
@@ -52,7 +54,7 @@ jobs:
     name: Lanceur Windows (vrai Windows)
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Le serveur PowerShell sert les fichiers
         shell: pwsh
@@ -88,7 +90,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # git archive applique .gitattributes : CRLF pour .bat/.ps1, fichiers de dev exclus,
       # droit d'exécution conservé pour le lanceur Mac.
@@ -99,7 +101,7 @@ jobs:
           unzip -p kiosque-bd.zip "kiosque-bd/Lancer le kiosque - Windows.bat" | grep -q $'\r' || { echo "::error::.bat sans CRLF"; exit 1; }
           unzip -Z kiosque-bd.zip "kiosque-bd/Lancer le kiosque - Mac.command" | grep -q '^-rwx' || { echo "::error::.command non exécutable"; exit 1; }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: kiosque-bd
           path: kiosque-bd.zip
