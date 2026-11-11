@@ -23,7 +23,7 @@ jobs:
           node --check config.js
           bash -n lib/kiosque-mac-linux.sh
 
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.3.3
         with:
           enable-cache: false   # un seul script, rien à mettre en cache
 
