@@ -21,7 +21,9 @@ if ! python3 -c 1 >/dev/null 2>&1; then
 fi
 [ -z "$PDF" ] || [ -f "$PDF" ] || die "fichier introuvable : $PDF"
 CFG_PDF=$(sed -n 's/^[[:space:]]*pdf:[[:space:]]*"\([^"]*\)".*/\1/p' config.js | head -1)
-[ -n "$PDF" ] || [ -f "${CFG_PDF:-bd.pdf}" ] || die "La BD « ${CFG_PDF:-bd.pdf} » est introuvable. Copiez votre PDF dans le dossier du kiosque et renommez-le « ${CFG_PDF:-bd.pdf} »."
+# bd_signets.pdf (sortie de outils/ajouter_sommaire.py), sinon le même nom sans « _signets »
+CFG_PDF=${CFG_PDF:-bd_signets.pdf}; PLAIN_PDF=$(printf '%s' "$CFG_PDF" | sed 's/_signets\.pdf$/.pdf/')
+[ -n "$PDF" ] || [ -f "$CFG_PDF" ] || [ -f "$PLAIN_PDF" ] || die "La BD « $PLAIN_PDF » est introuvable. Copiez votre PDF dans le dossier du kiosque et renommez-le « $PLAIN_PDF »."
 
 # Navigateur : Chromium/Chrome (Linux), puis Chrome ou Edge (macOS)
 BROWSER=""

@@ -36,7 +36,7 @@ Aucun paquet supplémentaire n'est nécessaire. La bibliothèque de lecture des 
 
 ## Démarrage rapide
 
-1. Copiez votre BD dans ce dossier sous le nom `bd.pdf`, ou indiquez son nom dans `config.js` (réglage `pdf`).
+1. Copiez votre BD dans ce dossier sous le nom `bd.pdf`, ou indiquez son nom dans `config.js` (réglage `pdf`). Pour ajouter des chapitres, voir [Ajouter les signets au PDF](#ajouter-les-signets-au-pdf).
 2. Lancez le kiosque :
    - Windows : double-cliquez sur `Lancer le kiosque - Windows.bat`.
    - macOS : double-cliquez sur `Lancer le kiosque - Mac.command`.
@@ -52,7 +52,7 @@ Le navigateur s'ouvre en plein écran. Pour le fermer pendant la mise au point :
 | --- | --- |
 | **Défilement automatique** | Les pages défilent en boucle, sans curseur. Un clic n'importe où passe en exploration, à la page affichée. |
 | **Exploration** | Clic sur les bords gauche et droit de la page, boutons ◀ ▶, molette, menu « ☰ Chapitres ». |
-| **Retour au défilement** | Réservé au personnel. **Ctrl + Alt + Q** : depuis le début. **Ctrl + Alt + R** : à partir de la page affichée. Ou automatiquement après une période d'inactivité, si `inactivityReturn` est réglé. |
+| **Retour au défilement** | Boutons discrets en haut de l'écran : « ⏮ Défiler depuis le début » à gauche, « Défiler depuis ici ▶ » à droite. Au clavier, **Ctrl + Alt + Q** et **Ctrl + Alt + R**. Ou automatiquement après une période d'inactivité, si `inactivityReturn` est réglé. |
 
 Pendant l'exploration, le clavier est neutralisé, sauf les flèches, Début, Fin et la combinaison de sortie. Le clic droit, le glisser-déposer et le zoom le sont aussi.
 
@@ -62,7 +62,7 @@ Tous les réglages sont dans `config.js`. Une valeur invalide est remplacée par
 
 | Réglage | Défaut | Rôle |
 | --- | --- | --- |
-| `pdf` | `"bd.pdf"` | Fichier à présenter, chemin relatif à `index.html`. |
+| `pdf` | `"bd_signets.pdf"` | Fichier à présenter, chemin relatif à `index.html`. S'il manque, le kiosque prend le même nom sans `_signets` (`bd.pdf`). |
 | `autoMode` | `"scroll"` | `"scroll"` : défilement continu. `"pages"` : une page à la fois, avec un fondu. |
 | `scrollSpeed` | `45` | Mode `scroll` : vitesse, en pixels par seconde. |
 | `pageDuration` | `10` | Mode `pages` : durée d'affichage de chaque page, en secondes. |
@@ -99,6 +99,8 @@ Une entrée dont la page n'existe pas dans le PDF est ignorée. Sans signets ni 
 
 `outils/ajouter_sommaire.py` écrit les signets dans le PDF à partir d'un fichier TOML. Il demande [uv](https://docs.astral.sh/uv/), qui installe lui-même Python et `pypdf` au premier lancement.
 
+Dans le dossier du kiosque (sous Windows, clic droit dans le dossier, puis « Ouvrir dans le Terminal ») :
+
 ```sh
 uv run outils/ajouter_sommaire.py bd.pdf                       # lit outils/sommaire.toml, écrit bd_signets.pdf
 uv run outils/ajouter_sommaire.py livre.pdf -s livre.toml -o livre_final.pdf
@@ -119,10 +121,10 @@ page = 5
 
 - `page` est le numéro de page dans le PDF à partir de 1, comme dans Aperçu ou Acrobat, sans guillemets.
 - Les signets déjà présents dans le PDF sont **remplacés**. On peut relancer le script autant de fois que nécessaire.
-- Sans `-o`, le résultat s'appelle `<nom>_signets.pdf` (ignoré par Git). Renommez-le, ou indiquez-le dans `pdf` de `config.js`.
+- Sans `-o`, le résultat s'appelle `<nom>_signets.pdf` (ignoré par Git). Le kiosque présente `bd_signets.pdf` en priorité, sans rien renommer. Attention : si vous remplacez ensuite `bd.pdf` par une autre BD, relancez le script ou supprimez `bd_signets.pdf`, sinon l'ancienne version reste affichée.
 - En cas d'erreur (page hors du document, ligne mal écrite, fichier ouvert dans un autre logiciel), le script s'arrête avec un message en français, sans rien écrire.
 
-Le dossier `outils/` n'est pas inclus dans le ZIP distribué : on prépare le PDF avant de l'envoyer sur la machine d'exposition.
+Le dossier `outils/` est inclus dans le ZIP distribué : on peut modifier `outils/sommaire.toml` et relancer le script directement sur la machine d'exposition, si uv y est installé.
 
 ## Préparer le PDF
 
@@ -159,7 +161,7 @@ Lancer le kiosque - Windows.bat   lanceur à double-cliquer (appelle lib/kiosque
 Lancer le kiosque - Mac.command   lanceur à double-cliquer (appelle lib/kiosque-mac-linux.sh)
 Guide d'installation.html         mode d'emploi pour les non-informaticiens
 lib/kiosque-*.ps1|sh              lanceurs : serveur local + navigateur en kiosque
-outils/ajouter_sommaire.py        écrit les signets dans un PDF depuis un TOML (hors ZIP)
+outils/ajouter_sommaire.py        écrit les signets dans un PDF depuis un TOML
 outils/sommaire.toml              sommaire d'exemple pour bd.pdf
 ```
 

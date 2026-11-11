@@ -2,7 +2,7 @@ import * as pdfjsLib from "./lib/pdf.min.mjs";
 pdfjsLib.GlobalWorkerOptions.workerSrc = "./lib/pdf.worker.min.mjs";
 
 const C = Object.assign({
-  pdf: "bd.pdf", autoMode: "scroll", scrollSpeed: 45, pageDuration: 10, pauseAtEnd: 5, pageGap: 0,
+  pdf: "bd_signets.pdf", autoMode: "scroll", scrollSpeed: 45, pageDuration: 10, pauseAtEnd: 5, pageGap: 0,
   clickToExplore: true, hint: "Cliquez pour explorer la BD",
   exitCombo: { ctrl: true, alt: true, shift: false, key: "q" },
   resumeCombo: { ctrl: true, alt: true, shift: false, key: "r" },
@@ -277,6 +277,8 @@ $("znext").addEventListener("click", () => goTo(cur + 1, 1));
 $("bprev").addEventListener("click", () => goTo(cur - 1, -1));
 $("bnext").addEventListener("click", () => goTo(cur + 1, 1));
 $("bchap").addEventListener("click", () => toggleChapters());
+$("bstart").addEventListener("click", () => startAuto(1));
+$("bhere").addEventListener("click", () => startAuto(cur));
 $("chapters").addEventListener("click", (e) => {
   const li = e.target.closest("li");
   if (li) { const p = +li.dataset.page; goTo(p, p >= cur ? 1 : -1); }
@@ -350,9 +352,18 @@ addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { if 
 // ---------------------------------------------------------------- démarrage
 (async function init() {
   try {
-    const task = pdfjsLib.getDocument({ url: C.pdf });
-    task.onProgress = ({ loaded, total }) => { if (total) $("loadbar").style.width = (60 * loaded / total) + "%"; };
-    pdf = await task.promise;
+    const open = (url) => {
+      const task = pdfjsLib.getDocument({ url });
+      task.onProgress = ({ loaded, total }) => { if (total) $("loadbar").style.width = (60 * loaded / total) + "%"; };
+      return task.promise;
+    };
+    // « bd_signets.pdf » absent (script de sommaire pas lancé) : on se rabat sur « bd.pdf »
+    const plain = C.pdf.replace(/_signets\.pdf$/i, ".pdf");
+    pdf = await open(C.pdf).catch((e) => {
+      if (e?.name !== "MissingPDFException" || plain === C.pdf) throw e;
+      C.pdf = plain;
+      return open(plain);
+    });
     N = pdf.numPages;
     for (let n = 1; n <= N; n++) {
       const v = (await pdf.getPage(n)).getViewport({ scale: 1 });
