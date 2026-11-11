@@ -22,9 +22,15 @@ window.KIOSQUE_CONFIG = {
   // key = la lettre en minuscule.
   exitCombo: { ctrl: true, alt: true, shift: false, key: "q" },
 
+  // Combinaison pour relancer le défilement à partir de la page affichée
+  // (au lieu de repartir du début). null = désactivée.
+  resumeCombo: { ctrl: true, alt: true, shift: false, key: "r" },
+
   // Retour automatique au défilement après N secondes sans activité.
   // 0 = jamais (seule la combinaison de touches fait sortir).
   inactivityReturn: 0,
+  // true = ce retour automatique reprend à la page affichée, false = au début.
+  inactivityResume: false,
 
   // Chapitres. Laissez null pour utiliser les signets du PDF.
   // Sinon : [{ title: "Chapitre 1 — ...", page: 1 }, { title: "...", page: 9 }, ...]

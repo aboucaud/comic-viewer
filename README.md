@@ -52,7 +52,7 @@ Le navigateur s'ouvre en plein écran. Pour le fermer pendant la mise au point :
 | --- | --- |
 | **Défilement automatique** | Les pages défilent en boucle, sans curseur. Un clic n'importe où passe en exploration, à la page affichée. |
 | **Exploration** | Clic sur les bords gauche et droit de la page, boutons ◀ ▶, molette, menu « ☰ Chapitres ». |
-| **Retour au défilement** | **Ctrl + Alt + Q**, réservé au personnel. Ou automatiquement après une période d'inactivité, si `inactivityReturn` est réglé. |
+| **Retour au défilement** | Réservé au personnel. **Ctrl + Alt + Q** : depuis le début. **Ctrl + Alt + R** : à partir de la page affichée. Ou automatiquement après une période d'inactivité, si `inactivityReturn` est réglé. |
 
 Pendant l'exploration, le clavier est neutralisé, sauf les flèches, Début, Fin et la combinaison de sortie. Le clic droit, le glisser-déposer et le zoom le sont aussi.
 
@@ -70,8 +70,10 @@ Tous les réglages sont dans `config.js`. Une valeur invalide est remplacée par
 | `pageGap` | `0` | Mode `scroll` : espace entre deux pages, en pixels. |
 | `clickToExplore` | `true` | Un clic du visiteur passe en exploration. |
 | `hint` | `"Cliquez pour explorer la BD"` | Message affiché pendant le défilement. |
-| `exitCombo` | Ctrl+Alt+Q | Combinaison pour revenir au défilement. |
+| `exitCombo` | Ctrl+Alt+Q | Combinaison pour revenir au défilement, depuis le début (et pour passer en exploration depuis le défilement). |
+| `resumeCombo` | Ctrl+Alt+R | Combinaison pour revenir au défilement à partir de la page affichée. `null` = désactivée. |
 | `inactivityReturn` | `0` | Retour automatique au défilement après N secondes sans activité. `0` = jamais. |
+| `inactivityResume` | `false` | `true` = le retour automatique reprend à la page affichée au lieu du début. |
 | `chapters` | `null` | Liste des chapitres. `null` = lecture des signets du PDF. |
 | `background` | `"#111"` | Couleur de fond autour des pages. |
 
@@ -179,4 +181,4 @@ Principe du rendu : chaque page du PDF est dessinée une seule fois dans un cane
 | « Aucun port réseau local libre » | Les ports 8765 à 8775 sont tous occupés. Fermez les autres kiosques ou redémarrez. |
 | Windows : rien ne se passe au double-clic | Consultez `%LOCALAPPDATA%\KiosqueBD\journal.txt`. |
 | Défilement saccadé | La machine est trop lente pour la résolution de l'écran. Baissez `scrollSpeed` ou passez en `autoMode: "pages"`. |
-| Ctrl+Alt+Q sans effet | Le clavier est-il bien branché sur la machine du kiosque ? Sur un clavier AZERTY, la touche physique A fonctionne aussi. |
+| Ctrl+Alt+Q ou Ctrl+Alt+R sans effet | Le clavier est-il bien branché sur la machine du kiosque ? Sur un clavier AZERTY, la touche physique A fonctionne aussi pour Q. |
