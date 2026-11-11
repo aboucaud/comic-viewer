@@ -2,8 +2,10 @@
 //  Configuration du kiosque BD — modifiez les valeurs ci-dessous.
 // =====================================================================
 window.KIOSQUE_CONFIG = {
-  // Fichier PDF à présenter (chemin relatif à index.html)
-  pdf: "bd.pdf",
+  // Fichier PDF à présenter (chemin relatif à index.html).
+  // « bd_signets.pdf » est la sortie de outils/ajouter_sommaire.py. S'il n'existe pas,
+  // le kiosque prend « bd.pdf » (même nom sans « _signets »).
+  pdf: "bd_signets.pdf",
 
   // Défilement automatique :
   //   "scroll" = les pages défilent en continu de haut en bas

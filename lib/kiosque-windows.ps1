@@ -37,11 +37,13 @@ try {
   if (-not (Test-Path -LiteralPath (Join-Path $Root "index.html"))) {
     Fail "Fichiers du kiosque introuvables.`n`nAvez-vous bien extrait le dossier ZIP avant de lancer le kiosque ?"
   }
-  $pdfName = "bd.pdf"
+  $pdfName = "bd_signets.pdf"
   $cfg = Get-Content -LiteralPath (Join-Path $Root "config.js") -Raw -Encoding UTF8
   if ($cfg -match 'pdf\s*:\s*"([^"]+)"') { $pdfName = $Matches[1] }
-  if (-not (Test-Path -LiteralPath (Join-Path $Root $pdfName))) {
-    Fail "La BD « $pdfName » est introuvable.`n`nCopiez votre fichier PDF dans le dossier du kiosque et renommez-le « $pdfName »."
+  # bd_signets.pdf (sortie de outils\ajouter_sommaire.py), sinon le même nom sans « _signets »
+  $plainName = $pdfName -replace '_signets\.pdf$', '.pdf'
+  if (-not (Test-Path -LiteralPath (Join-Path $Root $pdfName)) -and -not (Test-Path -LiteralPath (Join-Path $Root $plainName))) {
+    Fail "La BD « $plainName » est introuvable.`n`nCopiez votre fichier PDF dans le dossier du kiosque et renommez-le « $plainName »."
   }
 
   # ------------------------------------------------ navigateur
