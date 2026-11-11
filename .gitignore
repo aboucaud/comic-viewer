@@ -4,3 +4,6 @@
 # Système
 .DS_Store
 Thumbs.db
+
+# PDF produits par outils/ajouter_sommaire.py (sortie par défaut)
+*_signets.pdf

@@ -23,6 +23,11 @@ jobs:
           node --check config.js
           bash -n lib/kiosque-mac-linux.sh
 
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Outil de sommaire sur bd.pdf
+        run: uv run outils/ajouter_sommaire.py bd.pdf -o "$RUNNER_TEMP/bd_signets.pdf"
+
       - name: Syntaxe PowerShell
         shell: pwsh
         run: |

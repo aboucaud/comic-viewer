@@ -28,6 +28,7 @@ window.KIOSQUE_CONFIG = {
 
   // Chapitres. Laissez null pour utiliser les signets du PDF.
   // Sinon : [{ title: "Chapitre 1 — ...", page: 1 }, { title: "...", page: 9 }, ...]
+  // Raccourcis en retrait sous un chapitre : { title: "...", page: 9, marks: [{ title: "...", page: 11 }] }
   chapters: null,
 
   // Couleur de fond autour des pages

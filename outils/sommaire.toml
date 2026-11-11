@@ -1,0 +1,32 @@
+# Sommaire d'exemple pour bd.pdf, lu par ajouter_sommaire.py.
+#
+# Chaque [[chapitre]] devient une entrée du menu « Chapitres » du kiosque.
+# Les [[chapitre.sections]] placées dessous sont des signets : des raccourcis
+# vers une page précise, affichés en retrait sous leur chapitre.
+#
+# page = numéro de la page dans le PDF, à partir de 1 (comme dans Aperçu
+# ou Acrobat), écrit sans guillemets.
+
+[[chapitre]]
+titre = "Chapitre 1 — Le Big Bang"
+page = 1
+
+  [[chapitre.sections]]
+  titre = "Les premières secondes"
+  page = 3
+
+[[chapitre]]
+titre = "Chapitre 2 — La lumière fossile"
+page = 5
+
+  [[chapitre.sections]]
+  titre = "Le fond diffus cosmologique"
+  page = 7
+
+[[chapitre]]
+titre = "Chapitre 3 — Les galaxies"
+page = 9
+
+  [[chapitre.sections]]
+  titre = "La Voie lactée"
+  page = 11

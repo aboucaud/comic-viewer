@@ -81,22 +81,52 @@ Pour un essai rapide sans modifier `config.js`, ajoutez des paramètres à l'adr
 
 ## Chapitres
 
-Les chapitres sont lus dans les signets du PDF. Si le PDF n'en a pas, déclarez-les dans `config.js` :
+Les chapitres sont lus dans les signets du PDF. Les signets de premier niveau sont les chapitres. Les signets placés sous un chapitre s'affichent en retrait dans le menu : ce sont des raccourcis vers une page précise. Si le PDF n'a pas de signets, déclarez-les dans `config.js` :
 
 ```js
 chapters: [
   { title: "Chapitre 1 — Le Big Bang", page: 1 },
-  { title: "Chapitre 2 — Les étoiles", page: 5 },
+  { title: "Chapitre 2 — Les étoiles", page: 5,
+    marks: [{ title: "Une supernova", page: 7 }] },  // marks : facultatif
 ],
 ```
 
-Sans signets ni liste, le bouton « Chapitres » est masqué.
+Une entrée dont la page n'existe pas dans le PDF est ignorée. Sans signets ni liste, le bouton « Chapitres » est masqué.
+
+### Ajouter les signets au PDF
+
+`outils/ajouter_sommaire.py` écrit les signets dans le PDF à partir d'un fichier TOML. Il demande [uv](https://docs.astral.sh/uv/), qui installe lui-même Python et `pypdf` au premier lancement.
+
+```sh
+uv run outils/ajouter_sommaire.py bd.pdf                       # lit outils/sommaire.toml, écrit bd_signets.pdf
+uv run outils/ajouter_sommaire.py livre.pdf -s livre.toml -o livre_final.pdf
+uv run outils/ajouter_sommaire.py livre.pdf --decalage 2       # pages du TOML décalées de 2 (couverture, garde…)
+```
+
+Le sommaire s'écrit ainsi (voir l'exemple complet [`outils/sommaire.toml`](outils/sommaire.toml), fait pour `bd.pdf`) :
+
+```toml
+[[chapitre]]
+titre = "Chapitre 2 — La lumière fossile"
+page = 5
+
+  [[chapitre.sections]]          # signet en retrait sous le chapitre (facultatif)
+  titre = "Le fond diffus cosmologique"
+  page = 7
+```
+
+- `page` est le numéro de page dans le PDF à partir de 1, comme dans Aperçu ou Acrobat, sans guillemets.
+- Les signets déjà présents dans le PDF sont **remplacés**. On peut relancer le script autant de fois que nécessaire.
+- Sans `-o`, le résultat s'appelle `<nom>_signets.pdf` (ignoré par Git). Renommez-le, ou indiquez-le dans `pdf` de `config.js`.
+- En cas d'erreur (page hors du document, ligne mal écrite, fichier ouvert dans un autre logiciel), le script s'arrête avec un message en français, sans rien écrire.
+
+Le dossier `outils/` n'est pas inclus dans le ZIP distribué : on prépare le PDF avant de l'envoyer sur la machine d'exposition.
 
 ## Préparer le PDF
 
 - **Une page par page de BD.** Les planches doubles s'affichent en paysage, donc en petit sur un écran vertical.
 - **Poids.** Chaque page est convertie une fois en image, puis gardée en mémoire. Une BD d'une centaine de pages ne pose pas de problème. Au-delà, ou avec des pages très lourdes, testez le démarrage et la fluidité sur la machine d'exposition.
-- **Signets.** Ils fournissent le menu des chapitres sans configuration.
+- **Signets.** Ils fournissent le menu des chapitres sans configuration. Pour les ajouter, voir [Ajouter les signets au PDF](#ajouter-les-signets-au-pdf).
 
 ## Installer sur la machine d'exposition
 
@@ -122,11 +152,13 @@ index.html          structure et styles, sans dépendance externe
 app.js              logique (module ES) : rendu, modes auto et exploration
 config.js           réglages de l'opérateur
 lib/                PDF.js 4.10.38 (pdf.min.mjs + worker), embarqué pour le hors-ligne
-bd.pdf              BD de test : 12 pages, 3 chapitres, avec signets
+bd.pdf              BD de test : 12 pages, 3 chapitres + 3 raccourcis (signets de outils/sommaire.toml)
 Lancer le kiosque - Windows.bat   lanceur à double-cliquer (appelle lib/kiosque-windows.ps1)
 Lancer le kiosque - Mac.command   lanceur à double-cliquer (appelle lib/kiosque-mac-linux.sh)
 Guide d'installation.html         mode d'emploi pour les non-informaticiens
 lib/kiosque-*.ps1|sh              lanceurs : serveur local + navigateur en kiosque
+outils/ajouter_sommaire.py        écrit les signets dans un PDF depuis un TOML (hors ZIP)
+outils/sommaire.toml              sommaire d'exemple pour bd.pdf
 ```
 
 Pour tester sans le mode kiosque :
