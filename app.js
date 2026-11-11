@@ -5,7 +5,8 @@ const C = Object.assign({
   pdf: "bd.pdf", autoMode: "scroll", scrollSpeed: 45, pageDuration: 10, pauseAtEnd: 5, pageGap: 0,
   clickToExplore: true, hint: "Cliquez pour explorer la BD",
   exitCombo: { ctrl: true, alt: true, shift: false, key: "q" },
-  inactivityReturn: 0, chapters: null, background: "#111",
+  resumeCombo: { ctrl: true, alt: true, shift: false, key: "r" },
+  inactivityReturn: 0, inactivityResume: false, chapters: null, background: "#111",
 }, window.KIOSQUE_CONFIG || {});
 // ?pdf=autre.pdf dans l'URL remplace le fichier de la config
 const qp = new URLSearchParams(location.search);
@@ -185,17 +186,21 @@ function slideStep() {
   }, (C.pageDuration + (atEnd ? C.pauseAtEnd : 0)) * 1000);
 }
 
-function startAuto(fromStart = true) {
+// page = première page présentée (1 = depuis le début)
+function startAuto(page = 1) {
   stopAuto();
   mode = "auto"; show("auto");
   $("hint").textContent = C.hint; $("hint").style.display = C.clickToExplore ? "" : "none";
+  page = Math.min(Math.max(1, page), N);
   if (C.autoMode === "scroll") {
-    if (fromStart) offset = 0;
+    // haut de la page en haut de l'écran ; la bande est visible, offsetTop est donc à jour
+    const maxOff = Math.max(0, track.scrollHeight - innerHeight);
+    offset = Math.min(track.children[page - 1].offsetTop, maxOff);
     track.style.transform = `translateY(${-offset}px)`;
     holdUntil = performance.now() + 2500; lastT = 0; resetting = false;
     feedTrack(); raf = requestAnimationFrame(scrollLoop);
   } else {
-    if (fromStart) slidePage = 1;
+    slidePage = page;
     slide.innerHTML = ""; showSlide(slidePage); slideStep();
   }
 }
@@ -288,7 +293,8 @@ $("explore").addEventListener("wheel", (e) => {
 
 // On compare le caractère (e.key) ET la touche physique (e.code) : sous macOS,
 // Option transforme « q » en « œ », et e.key ne vaut alors jamais « q ».
-const isCombo = (e) => { const k = C.exitCombo, key = String(k.key).toLowerCase();
+const isCombo = (e, k = C.exitCombo) => { if (!k || !k.key) return false;
+  const key = String(k.key).toLowerCase();
   const sameKey = (e.key && e.key.toLowerCase() === key) || e.code === "Key" + key.toUpperCase();
   return sameKey && !!k.ctrl === e.ctrlKey && !!k.alt === e.altKey && !!k.shift === e.shiftKey; };
 // Raccourcis de fermeture du navigateur : ne jamais les intercepter. Sous Windows,
@@ -307,8 +313,13 @@ addEventListener("keydown", (e) => {
   }
   if (isCombo(e)) {
     e.preventDefault();
-    if (mode === "explore") startAuto(true);
+    if (mode === "explore") startAuto(1);
     else if (mode === "auto") startExplore(currentAutoPage());
+    return;
+  }
+  if (isCombo(e, C.resumeCombo)) {
+    e.preventDefault();
+    if (mode === "explore") startAuto(cur); // reprise à la page affichée
     return;
   }
   if (mode === "explore") {
@@ -329,7 +340,7 @@ addEventListener("wheel", (e) => { if (e.ctrlKey) e.preventDefault(); }, { passi
 let idleTimer = 0;
 function armInactivity() {
   clearTimeout(idleTimer);
-  if (mode === "explore" && C.inactivityReturn > 0) idleTimer = setTimeout(() => startAuto(true), C.inactivityReturn * 1000);
+  if (mode === "explore" && C.inactivityReturn > 0) idleTimer = setTimeout(() => startAuto(C.inactivityResume ? cur : 1), C.inactivityReturn * 1000);
 }
 for (const ev of ["mousemove", "mousedown", "wheel", "keydown"]) addEventListener(ev, armInactivity, { passive: true });
 
@@ -352,7 +363,7 @@ addEventListener("resize", () => { clearTimeout(rT); rT = setTimeout(() => { if 
     // on rend les premières pages avant d'afficher, le reste en arrière-plan
     const first = Math.min(N, 3);
     for (let n = 1; n <= first; n++) { await renderPage(n); $("loadbar").style.width = (60 + 40 * n / first) + "%"; }
-    startAuto(true);
+    startAuto(1);
     prerenderAll();
   } catch (err) {
     console.error(err);
